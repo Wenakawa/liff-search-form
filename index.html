@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ค้นหา Size Limit</title>
+    <style>
+        /* ส่วนนี้คือโค้ด CSS สำหรับตกแต่งหน้าตาให้สวยงาม */
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; }
+        h1 { color: #06C755; text-align: center; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 14px; border: none; border-radius: 8px; background-color: #06C755; color: white; font-size: 18px; font-weight: bold; cursor: pointer; margin-top: 1rem; }
+        button:disabled { background-color: #b2b2b2; cursor: not-allowed; }
+        #loading { text-align: center; margin-top: 20px; font-size: 16px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 ค้นหา Size Limit</h1>
+        <form id="searchForm">
+            </form>
+        <button id="submitButton" disabled>กำลังโหลดข้อมูล...</button>
+        <div id="loading">กำลังค้นหา...</div>
+    </div>
+
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script>
+        // ===================================================================
+        // === ส่วนที่ 1: ตั้งค่า - คุณต้องแก้ไขค่าในส่วนนี้!!! ===
+        // ===================================================================
+
+        // 1.1: ใส่ LIFF ID ของคุณ (จะได้มาในขั้นตอนสุดท้าย)
+        const LIFF_ID = 'YOUR_LIFF_ID'; 
+
+        // 1.2: ใส่ URL ทริกเกอร์ของ Cloud Function ที่คัดลอกมา
+        const TRIGGER_URL = https://us-central1-c--owlc.cloudfunctions.net/dialogflowFirebaseFulfillment;
+
+        // 1.3: แก้ไขตัวเลือกใน Dropdowns ให้ตรงกับข้อมูลของคุณ
+        const options = {
+            size_limit: ["290", "340", "400", "440", "490", "540", "590", "IFX", "S45", "SPA"], // ใส่ Size Limit ทั้งหมดที่มี
+            prod_cd: ["HC", "HP", "HK", "HT"],              // ใส่ Prod-CD ทั้งหมดที่มี
+            enduse: ["", "*", "IDX", "IGX", "IDR", "IGR", "45C", "SDX", "PNX", "BXX"],        // "" คือค่าว่างสำหรับ "ทั้งหมด"
+            application: ["", "*", "X", "Y", "Q", "P", "C", "D", "E", "G", "B", "L", "M", "N", "O", "K", "A", "F", "S"],
+            trim_fl: ["Y", "N"]
+        };
+
+        // ===================================================================
+        // === ส่วนที่ 2: โค้ดหลัก - ไม่ต้องแก้ไขส่วนนี้!!! ===
+        // ===================================================================
+
+        const form = document.getElementById('searchForm');
+        const submitButton = document.getElementById('submitButton');
+        const loadingDiv = document.getElementById('loading');
+
+        function createForm() {
+            form.innerHTML = `
+                <div class="form-group">
+                    <label for="size_limit">1. Size Limit</label>
+                    <select id="size_limit" required>${options.size_limit.map(o => `<option value="${o}">${o}</option>`).join('')}</select>
+                </div>
+                <div class="form-group">
+                    <label for="prod_cd">2. Prod-CD</label>
+                    <select id="prod_cd" required>${options.prod_cd.map(o => `<option value="${o}">${o}</option>`).join('')}</select>
+                </div>
+                <div class="form-group">
+                    <label for="thk">3. THk (กรอกตัวเลข)</label>
+                    <input type="number" id="thk" step="0.01" required placeholder="เช่น 2.3">
+                </div>
+                <div class="form-group">
+                    <label for="wid">4. Wid (กรอกตัวเลข)</label>
+                    <input type="number" id="wid" required placeholder="เช่น 1219">
+                </div>
+                <div class="form-group">
+                    <label for="enduse">5. Enduse (ไม่บังคับ)</label>
+                    <select id="enduse">${options.enduse.map(o => `<option value="${o}">${o || 'ทั้งหมด'}</option>`).join('')}</select>
+                </div>
+                <div class="form-group">
+                    <label for="application">6. Application (ไม่บังคับ)</label>
+                    <select id="application">${options.application.map(o => `<option value="${o}">${o || 'ทั้งหมด'}</option>`).join('')}</select>
+                </div>
+                <div class="form-group">
+                    <label for="trim_fl">7. Trim_FL (ไม่บังคับ)</label>
+                    <select id="trim_fl">${options.trim_fl.map(o => `<option value="${o}">${o || 'ทั้งหมด'}</option>`).join('')}</select>
+                </div>
+            `;
+        }
+
+        async function main() {
+            try {
+                await liff.init({ liffId: LIFF_ID });
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                    return;
+                }
+                createForm();
+                submitButton.disabled = false;
+                submitButton.textContent = 'ค้นหาข้อมูล';
+            } catch (error) {
+                console.error('LIFF Initialization failed', error);
+                alert('ไม่สามารถเปิดฟอร์มได้ กรุณาลองอีกครั้ง');
+            }
+        }
+
+        main();
+
+        submitButton.addEventListener('click', async () => {
+            const searchData = {
+                size_limit: document.getElementById('size_limit').value,
+                prod_cd: document.getElementById('prod_cd').value,
+                thk: parseFloat(document.getElementById('thk').value),
+                wid: parseFloat(document.getElementById('wid').value),
+                enduse: document.getElementById('enduse').value,
+                application: document.getElementById('application').value,
+                trim_fl: document.getElementById('trim_fl').value,
+            };
+
+            if (!searchData.thk || !searchData.wid) {
+                alert('กรุณากรอกข้อมูล THk และ Wid ให้ครบถ้วน');
+                return;
+            }
+
+            submitButton.style.display = 'none';
+            loadingDiv.style.display = 'block';
+
+            try {
+                const response = await fetch(TRIGGER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(searchData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+
+                if (liff.isInClient()) {
+                    await liff.sendMessages([{ type: 'text', text: result.message }]);
+                    liff.closeWindow();
+                } else {
+                    alert(`Result:\n${result.message}`);
+                }
+
+            } catch (error) {
+                console.error('Search failed:', error);
+                alert('การค้นหาล้มเหลว กรุณาตรวจสอบข้อมูลหรือลองอีกครั้ง');
+            } finally {
+                submitButton.style.display = 'block';
+                loadingDiv.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
