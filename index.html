@@ -19,83 +19,34 @@
 <body>
     <div class="container">
         <h1>🔍 ค้นหา Size Limit</h1>
-        <form id="searchForm">
-            </form>
+        <form id="searchForm"></form>
         <button id="submitButton" disabled>กำลังโหลดข้อมูล...</button>
         <div id="loading">กำลังค้นหา...</div>
     </div>
 
     <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
     <script>
-        // ใช้ Event Listener เพื่อให้แน่ใจว่า HTML โหลดเสร็จก่อน JavaScript ทำงาน
         document.addEventListener('DOMContentLoaded', (event) => {
-
-            // === ส่วนที่ 1: ตั้งค่า (แก้ไขค่า 2 จุดนี้) ===
             const LIFF_ID = '2008056084-rnwNKN2w'; 
             const TRIGGER_URL = 'https://us-central1-c--owlc.cloudfunctions.net/dialogflowFirebaseFulfillment';
 
             // --- (ไม่บังคับ) แก้ไขตัวเลือกใน Dropdowns ---
             const options = {
                 size_limit: ["*", "290", "340",	"400", "440", "490", "540", "590", "330IF", "IFX", "S45", "SPA"],
-                                prod_cd: ["HC", "HP", "HK", "HT"],
-                                enduse: ["*", "IDX", "IGX", "IDR", "IGR", "45C", "SDX", "PNX", "BXX"],
-                                application: ["", "X", "Y", "Q", "P", "C", "D",	"E", "G", "B", "L", "M", "N", "O", "K", "A", "F", "S", "*"],
-                                trim_fl: ["", "Y", "N"]
+                prod_cd: ["HC", "HP", "HK", "HT"],
+                enduse: ["", "*", "IDX", "IGX", "IDR", "IGR", "45C", "SDX", "PNX", "BXX"],
+                application: ["", "X", "Y", "Q", "P", "C", "D",	"E", "G", "B", "L", "M", "N", "O", "K", "A", "F", "S", "*"],
+                trim_fl: ["", "Y", "N"]
             };
 
-            // === ส่วนที่ 2: โค้ดหลัก (ไม่ต้องแก้ไข) ===
+
             const form = document.getElementById('searchForm');
             const submitButton = document.getElementById('submitButton');
             const loadingDiv = document.getElementById('loading');
 
-            function createForm() {
-                form.innerHTML = `
-                    <div class="form-group">
-                        <label for="size_limit">1. Size Limit</label>
-                        <select id="size_limit" required>${options.size_limit.map(o => `<option value="${o}">${o}</option>`).join('')}</select>
-                    </div>
-                    <div class="form-group">
-                        <label for="prod_cd">2. Prod-CD</label>
-                        <select id="prod_cd" required>${options.prod_cd.map(o => `<option value="${o}">${o}</option>`).join('')}</select>
-                    </div>
-                    <div class="form-group">
-                        <label for="thk">3. THk (กรอกตัวเลข)</label>
-                        <input type="number" id="thk" step="0.01" required placeholder="เช่น 2.3">
-                    </div>
-                    <div class="form-group">
-                        <label for="wid">4. Wid (กรอกตัวเลข)</label>
-                        <input type="number" id="wid" required placeholder="เช่น 1219">
-                    </div>
-                    <div class="form-group">
-                        <label for="enduse">5. Enduse (ไม่บังคับ)</label>
-                        <select id="enduse">${options.enduse.map(o => `<option value="${o}">${o || 'ทั้งหมด'}</option>`).join('')}</select>
-                    </div>
-                    <div class="form-group">
-                        <label for="application">6. Application (ไม่บังคับ)</label>
-                        <select id="application">${options.application.map(o => `<option value="${o}">${o || 'ทั้งหมด'}</option>`).join('')}</select>
-                    </div>
-                    <div class="form-group">
-                        <label for="trim_fl">7. Trim_FL (ไม่บังคับ)</label>
-                        <select id="trim_fl">${options.trim_fl.map(o => `<option value="${o}">${o || 'ทั้งหมด'}</option>`).join('')}</select>
-                    </div>
-                `;
-            }
+            function createForm() { /* โค้ดส่วนนี้เหมือนเดิม */ }
 
-            async function main() {
-                try {
-                    await liff.init({ liffId: LIFF_ID });
-                    if (!liff.isLoggedIn()) {
-                        liff.login();
-                        return;
-                    }
-                    createForm();
-                    submitButton.disabled = false;
-                    submitButton.textContent = 'ค้นหาข้อมูล';
-                } catch (error) {
-                    console.error('LIFF Initialization failed', error);
-                    alert('ไม่สามารถเปิดฟอร์มได้ กรุณาลองอีกครั้ง');
-                }
-            }
+            async function main() { /* โค้ดส่วนนี้เหมือนเดิม */ }
 
             main();
 
@@ -131,12 +82,31 @@
 
                     const result = await response.json();
 
+                    // --- จุดที่แก้ไข ---
+                    // สร้างข้อความทวนคำถามจาก searchParams ที่ได้รับกลับมา
+                    const queryParams = result.searchParams;
+                    let reviewText = `🔎 ข้อมูลที่คุณค้นหา:\n`;
+                    reviewText += `Size Limit: ${queryParams.size_limit}\n`;
+                    reviewText += `Prod-CD: ${queryParams.prod_cd}\n`;
+                    reviewText += `THk: ${queryParams.thk}\n`;
+                    reviewText += `Wid: ${queryParams.wid}`;
+                    if(queryParams.enduse) reviewText += `\nEnduse: ${queryParams.enduse}`;
+                    if(queryParams.application) reviewText += `\nApplication: ${queryParams.application}`;
+                    if(queryParams.trim_fl) reviewText += `\nTrim_FL: ${queryParams.trim_fl}`;
+
+                    // สร้างข้อความผลลัพธ์จาก resultMessage
+                    const resultText = `\n\nผลการค้นหา:\n${result.resultMessage}`;
+
+                    // รวมข้อความทั้งหมดเข้าด้วยกัน
+                    const finalMessage = reviewText + resultText;
+                    // --- สิ้นสุดจุดที่แก้ไข ---
+
                     if (liff.isInClient()) {
-                        // นี่คือโค้ดที่ใช้ส่งข้อความกลับไปในแชท
-                        await liff.sendMessages([{ type: 'text', text: result.message }]);
+                        await liff.sendMessages([{ type: 'text', text: finalMessage }]);
                         liff.closeWindow();
                     } else {
-                        alert(`Result:\n${result.message}`);
+                        // แปลง \n ให้แสดงผลขึ้นบรรทัดใหม่ใน alert ของเบราว์เซอร์
+                        alert(finalMessage.replace(/\n/g, '\n'));
                     }
 
                 } catch (error) {
@@ -147,8 +117,33 @@
                     loadingDiv.style.display = 'none';
                 }
             });
+
+            // --- ใส่ฟังก์ชัน createForm และ main ที่เหมือนเดิมกลับเข้ามา ---
+            function createForm() {
+                form.innerHTML = `
+                    <div class="form-group"><label for="size_limit">1. Size Limit</label><select id="size_limit" required>${options.size_limit.map(o => `<option value="${o}">${o}</option>`).join('')}</select></div>
+                    <div class="form-group"><label for="prod_cd">2. Prod-CD</label><select id="prod_cd" required>${options.prod_cd.map(o => `<option value="${o}">${o}</option>`).join('')}</select></div>
+                    <div class="form-group"><label for="thk">3. THk (กรอกตัวเลข)</label><input type="number" id="thk" step="0.01" required placeholder="เช่น 2.3"></div>
+                    <div class="form-group"><label for="wid">4. Wid (กรอกตัวเลข)</label><input type="number" id="wid" required placeholder="เช่น 1219"></div>
+                    <div class="form-group"><label for="enduse">5. Enduse (ไม่บังคับ)</label><select id="enduse">${options.enduse.map(o => `<option value="${o}">${o || 'ทั้งหมด'}</option>`).join('')}</select></div>
+                    <div class="form-group"><label for="application">6. Application (ไม่บังคับ)</label><select id="application">${options.application.map(o => `<option value="${o}">${o || 'ทั้งหมด'}</option>`).join('')}</select></div>
+                    <div class="form-group"><label for="trim_fl">7. Trim_FL (ไม่บังคับ)</label><select id="trim_fl">${options.trim_fl.map(o => `<option value="${o}">${o || 'ทั้งหมด'}</option>`).join('')}</select></div>
+                `;
+            }
+
+            async function main() {
+                try {
+                    await liff.init({ liffId: LIFF_ID });
+                    if (!liff.isLoggedIn()) { liff.login(); return; }
+                    createForm();
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'ค้นหาข้อมูล';
+                } catch (error) {
+                    console.error('LIFF Initialization failed', error);
+                    alert('ไม่สามารถเปิดฟอร์มได้ กรุณาลองอีกครั้ง');
+                }
+            }
         });
     </script>
 </body>
-
 </html>
