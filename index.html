@@ -29,14 +29,14 @@
     <script>
         document.addEventListener('DOMContentLoaded', (event) => {
             // === ส่วนที่ 1: ตั้งค่า ===
-            const LIFF_ID = 'YOUR_LIFF_ID'; // แก้ไขค่านี้
-            const TRIGGER_URL = 'YOUR_TRIGGER_URL'; // แก้ไขค่านี้
+            const LIFF_ID = '2008056084-Qa45P5v4'; // แก้ไขค่านี้
+            const TRIGGER_URL = 'https://us-central1-c--owlc.cloudfunctions.net/dialogflowFirebaseFulfillment'; // แก้ไขค่านี้
             const options = {
-                size_limit: ["300", "400", "590", "650"],
-                prod_cd: ["HC", "HP", "C"],
-                enduse: ["", "*", "H", "C", "N"],
-                application: ["", "*", "K", "N"],
-                trim_fl: ["", "*", "Y", "N"]
+                size_limit: ["*", "290", "340",	"400", "440", "490", "540", "590", "330IF", "IFX", "S45", "SPA"],
+                prod_cd: ["HC", "HP", "HK", "HT"],
+                enduse: ["", "*", "IDX", "IGX", "IDR", "IGR", "45C", "SDX", "PNX", "BXX"],
+                application: ["", "X", "Y", "Q", "P", "C", "D",	"E", "G", "B", "L", "M", "N", "O", "K", "A", "F", "S", "*"],
+                trim_fl: ["", "Y", "N"]
             };
 
             // === ส่วนที่ 2: โค้ดหลัก (ไม่ต้องแก้ไข) ===
